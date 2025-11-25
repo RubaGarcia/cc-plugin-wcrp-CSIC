@@ -69,7 +69,7 @@ def check_nan_inf(dataset, variable, parameter="NaN", severity=BaseCheck.MEDIUM)
     fill_value = getattr(var, '_FillValue', None)
 
     if fill_value is not None and np.isnan(fill_value):
-        ctx.add_failure("Warning: _FillValue is NaN. See Fill_value check for more information.")
+        ctx.add_failure("Variable _FillValue attribute is NaN. This may interfere with data masking. See check_fillvalues_timeseries for details.")
         return ctx
     try:
         if parameter == "NaN":
@@ -77,7 +77,7 @@ def check_nan_inf(dataset, variable, parameter="NaN", severity=BaseCheck.MEDIUM)
         elif parameter == "Inf":
             check = check_any_inf(data)
     except Exception as e:
-        ctx.add_failure(f"Error during {parameter} check: {e}")
+        ctx.add_failure(f"Failed to check for {parameter} values: {e}")
 
     if check:
         if parameter == "NaN":
@@ -99,10 +99,10 @@ def check_nan_inf(dataset, variable, parameter="NaN", severity=BaseCheck.MEDIUM)
             )
             ctx.coordinates.append(coord_obj)
 
-        ctx.add_failure(f"{parameter} values detected: {len(coord_list)}")
+        ctx.add_failure(f"{parameter} values detected at {len(coord_list)} grid points.")
         dump_data_file_extended(dataset, variable, 'check_nan_inf', ctx)
     else:
-        ctx.messages.append(f"No {parameter} detected in the dataset.")
+        ctx.messages.append(f"No {parameter} values detected in the dataset.")
         ctx.add_pass()
 
     return ctx

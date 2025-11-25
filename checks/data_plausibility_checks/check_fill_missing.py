@@ -53,11 +53,8 @@ def check_value(data_slice, parameters):
     val = parameters['val']
     val_name = parameters['name']
     if val_name == 'FillValue' or val_name == 'MissingValue':
-        if isinstance(data_slice, ma.MaskedArray):
-            filled_data = data_slice.filled(fill_value=val)
-            return np.sum(filled_data == val)
-        else:
-            return np.sum(data_slice == val)
+        filled_data = data_slice.filled(fill_value=val)
+    return np.sum(filled_data == val)
 
 def load_value_to_check(var_obj, parameter, ctx):
     # Load the FillValue or MissingValue from the variable attributes
@@ -65,7 +62,7 @@ def load_value_to_check(var_obj, parameter, ctx):
     missing_value = getattr(var_obj, 'missing_value', None)
 
     if fill_value is not None and missing_value is not None and fill_value == missing_value:
-        ctx.messages.append("Warning: _FillValue and missing_value are the same.")
+        ctx.messages.append("Warning: _FillValue and missing_value have the same value.")
     if parameter == "FillValue":
         parameters_func = {'val': fill_value, "name": "FillValue"}
         if fill_value is None:
@@ -109,7 +106,7 @@ def check_fillvalues_timeseries(
     parameters_func, ctx = load_value_to_check(var_obj, parameter, ctx)
     if parameters_func["val"] is None:
         ctx.add_pass()
-        ctx.messages.append(f"{parameter} not found in the variable attributes.")
+        ctx.messages.append(f"{parameter} attribute not defined for this variable.")
         return ctx
 
     try:
@@ -141,7 +138,7 @@ def check_fillvalues_timeseries(
             check_diff_flag = False
         #Preparing output for each case
     except Exception as e:
-        ctx.add_failure(f"Error during {parameter} check: {e}")
+        ctx.add_failure(f"Failed to check {parameter} along time dimension: {e}")
         return ctx
     
     if check and check_diff_flag==False:
@@ -154,9 +151,7 @@ def check_fillvalues_timeseries(
                                 values=[value],)
         ctx.add_pass()
         ctx.messages.append(
-        f"{parameter} detected in the dataset. "
-        f"{parameter} are constant. "
-        f"Number of {parameter}: {len(flattened)}.")
+        f"{parameter} present in dataset with constant count along the time dimension ({len(flattened)} occurrences).")
 
     elif check and check_diff_flag:
         total_coords = [coord for (coord, _) in detected_diff]
@@ -167,14 +162,12 @@ def check_fillvalues_timeseries(
                                 indices=[coord],
                                 values=[value],)
         message = (
-            f"{parameter} detected in the dataset. "
-            f"{parameter} are not constant. "
-            f"Number of difference in {parameter}: {len(detected_diff)}. "
+            f"{parameter} count varies along time dimension: {len(detected_diff)} time steps show different counts of {parameter}."
         )
         ctx.add_failure(message)
         dump_data_file_extended(dataset, variable, "check_fillvalues", ctx)
     else:
         ctx.add_pass()
-        ctx.messages.append(f"No anomalous {parameter} detected in the dataset.")
+        ctx.messages.append(f"No {parameter} detected in the dataset.")
 
     return ctx

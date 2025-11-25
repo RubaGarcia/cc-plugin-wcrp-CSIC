@@ -72,7 +72,7 @@ def check_chunk_size(dataset, severity=BaseCheck.MEDIUM):
                 result, chunk_size, len_time = chunk_sizes_conditions(dataset, dim)
             except Exception as e:
                 ctx.is_valid = False
-                ctx.add_failure(f"Error checking chunk size for '{dim}': {e}")
+                ctx.add_failure(f"Failed to check chunk size for dimension '{dim}': {e}")
                 continue
 
             match result:
@@ -84,9 +84,9 @@ def check_chunk_size(dataset, severity=BaseCheck.MEDIUM):
 
                 case 1:
                     ctx.is_valid = True
-                    ctx.add_failure(f"Chunk size of '{variable}' ({chunk_size}) is different from its length ({len_time}), but not too small.")
+                    ctx.add_failure(f"Chunk size of '{variable}' ({chunk_size}) differs from dimension length ({len_time}).")
                 case 2:
                     ctx.is_valid = False
-                    ctx.add_failure(f"Chunk size of '{variable}' ({chunk_size}) is not defined.")
+                    ctx.add_failure(f"Chunking information not found for variable '{variable}'.")
 
     return ctx

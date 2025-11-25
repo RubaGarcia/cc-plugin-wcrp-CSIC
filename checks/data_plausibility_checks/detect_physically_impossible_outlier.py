@@ -9,7 +9,6 @@ Intended to be included in the WCRP plugins.
 
 from compliance_checker.base import BaseCheck, TestCtx
 import numpy as np
-import numpy.ma as ma
 import os
 import json
 
@@ -265,17 +264,16 @@ def check_outliers(dataset, thresholds_file='outliers_thresholds.json', severity
     try:
         thresholds, variable = get_thresholds_variable(dataset, thresholds_file)
     except ValueError as e:
-        ctx.add_failure(f"Error getting thresholds: {str(e)}")
+        ctx.add_failure(f"Failed to load or match thresholds from file: {str(e)}")
         return ctx
 
     data = dataset.variables[variable][:]
-    if isinstance(data, ma.MaskedArray):
-        data = data.filled(np.nan)
+    data = data.filled(np.nan)
     outliers = detect_outliers(data, thresholds['min'], thresholds['max'])
     try:
         results, check = prepare_results(outliers, thresholds, dataset, variable)
     except Exception as e:
-        ctx.add_failure(f"Error preparing results: {e}")
+        ctx.add_failure(f"Failed to extract outlier coordinates from dataset: {e}")
         return ctx
 
     if check:
@@ -293,8 +291,7 @@ def check_outliers(dataset, thresholds_file='outliers_thresholds.json', severity
             ctx.coordinates.append(coord_obj)
 
         ctx.add_failure(
-            f"Physically impossible outliers detected: {results['num_outliers']} "
-            f"Thresholds: {thresholds}"
+            f"Physically impossible outliers detected: {results['num_outliers']} values outside valid range [{thresholds['min']}, {thresholds['max']}] {thresholds['unit']}."
         )
         dump_data_file_extended(dataset, variable, 'check_physically_impossible_outliers', ctx)
     else:

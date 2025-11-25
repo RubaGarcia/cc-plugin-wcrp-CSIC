@@ -54,7 +54,7 @@ def check_constants(dataset, variable, severity=BaseCheck.MEDIUM):
         values = check_variable_conditions(dataset, variable, check_dims, check_all_constant)
         detected = [coord for coord in values if bool]
     except Exception as e:
-        ctx.add_failure(f"Error during constant value check: {e}")
+        ctx.add_failure(f"Failed to perform constant value check: {e}")
         return ctx
     if len(detected) > 0:
         for coord in detected:
@@ -67,10 +67,10 @@ def check_constants(dataset, variable, severity=BaseCheck.MEDIUM):
             ctx.coordinates.append(coord_obj)
 
         num_constants = len(detected)
-        ctx.add_failure(f"Constant values detected: {num_constants}")
+        ctx.add_failure(f"Constant values detected in {num_constants} along the time dimension")
         dump_data_file_extended(dataset, variable, 'check_constant', ctx)
     else:
         ctx.add_pass()
-        ctx.messages.append("No constant values detected in the dataset.")
+        ctx.messages.append("No constant values were detected in the dataset along the time dimension.")
 
     return ctx
