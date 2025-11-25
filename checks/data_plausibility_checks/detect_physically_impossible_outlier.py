@@ -11,7 +11,7 @@ from compliance_checker.base import BaseCheck, TestCtx
 import numpy as np
 import os
 import json
-
+import numpy.ma as ma
 
 from checks.data_plausibility_checks.utils.dimensions import get_dimension_info
 from checks.data_plausibility_checks.utils.auxiliar import ExtendedTestCtx, dump_data_file_extended,Coordinate
@@ -268,7 +268,9 @@ def check_outliers(dataset, thresholds_file='outliers_thresholds.json', severity
         return ctx
 
     data = dataset.variables[variable][:]
-    data = data.filled(np.nan)
+    
+    if isinstance(data, ma.MaskedArray):
+        data = data.filled(np.nan) 
     outliers = detect_outliers(data, thresholds['min'], thresholds['max'])
     try:
         results, check = prepare_results(outliers, thresholds, dataset, variable)
